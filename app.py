@@ -10817,7 +10817,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 print(f"⚠️ Não foi possível obter URL automaticamente. Erro: {e}")
                 # Fallback: usa URL hardcoded do Hugging Face
                 # SUBSTITUA PELA SUA URL REAL se não estiver no HF
-                base_url = "https://huggingface.co/spaces/AMalta/INDICLIN"
+                base_url = "https://indiclin.onrender.com"  # Substitua pela SUA URL do Render
                 print(f"ℹ️ Usando URL fallback: {base_url}")
 
             # Link final
@@ -18047,4 +18047,5 @@ def server(input: Inputs, output: Outputs, session: Session):
     # === 📺 FIM - LÓGICA DA VITRINE ===
     # ===================================================================
              
+
 app = App(app_ui, server)

@@ -2410,20 +2410,40 @@ def server(input: Inputs, output: Outputs, session: Session):
     # ==========================================================
     @reactive.calc
     def get_url_params():
-        """Lê os parâmetros da URL"""
-        resultado = {"view": None, "clinic_id": None}
-        
+        """Lê os parâmetros da URL usando método alternativo"""
         try:
-            # Tenta método direto via request
-            request = session.http_conn.request
+            # Método 1: Tentar via Starlette Request
+            from starlette.requests import Request
+            request: Request = session.http_conn.request
             query_params = dict(request.query_params)
-            resultado["view"] = query_params.get('view')
-            resultado["clinic_id"] = query_params.get('clinic_id')
-            print(f"✅ URL Params: {resultado}")
-        except Exception as e:
-            print(f"⚠️ Erro ao ler URL: {e}")
+            
+            resultado = {
+                "view": query_params.get('view'),
+                "clinic_id": query_params.get('clinic_id')
+            }
+            
+            print(f"✅ URL Params (Starlette): {resultado}")
+            return resultado
+            
+        except Exception as e1:
+            print(f"❌ Método 1 falhou: {e1}")
+            
+            try:
+                # Método 2: Tentar via client_data (fallback)
+                url_search = session.client_data.url_search
+                if url_search:
+                    params = urllib.parse.parse_qs(url_search.lstrip('?'))
+                    resultado = {
+                        "view": params.get('view', [None])[0],
+                        "clinic_id": params.get('clinic_id', [None])[0]
+                    }
+                    print(f"✅ URL Params (client_data): {resultado}")
+                    return resultado
+            except Exception as e2:
+                print(f"❌ Método 2 também falhou: {e2}")
         
-        return resultado
+        print("⚠️ Retornando params vazios")
+        return {"view": None, "clinic_id": None}
     # ==========================================================
     
     
@@ -18047,5 +18067,4 @@ def server(input: Inputs, output: Outputs, session: Session):
     # === 📺 FIM - LÓGICA DA VITRINE ===
     # ===================================================================
              
-
 app = App(app_ui, server)

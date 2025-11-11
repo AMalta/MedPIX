@@ -2016,6 +2016,7 @@ app_ui = ui.page_fluid(
         ui.tags.style("""
             body { background: linear-gradient(135deg, #1DD1A1 0%, #0D9488 100%);
                     min-height: 100vh; font-family: 'Segoe UI', sans-serif; }
+            .logo-medpix:hover { transform: scale(1.05); }
             .app-header { background: #2D3748; backdrop-filter: blur(10px);
                           padding: 1rem 2rem; border-radius: 1rem; margin-bottom: 2rem;
                           box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
@@ -4006,9 +4007,17 @@ def server(input: Inputs, output: Outputs, session: Session):
                 {"class": "app-header", "style": "padding: 1.5rem 2rem; background: #2D3748 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"},
                 ui.row(
                     ui.column(2,
-                        ui.img(src="https://huggingface.co/spaces/AMalta/INDICLIN/resolve/main/logoMP.jpeg", 
-                               style="height: 80px; width: auto; object-fit: contain;")
-                    ),
+                        ui.img(
+                            src="https://huggingface.co/spaces/AMalta/INDICLIN/resolve/main/logoMP.jpeg",
+                            style="""
+                                height: 140px; 
+                                width: auto; 
+                                margin-bottom: 2rem;
+                                filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+                                transition: transform 0.3s ease;
+                            """,
+                            class_="logo-medpix"
+                        ),
                     ui.column(7,
                         ui.div(
                             {"style": "display: flex; flex-direction: column; justify-content: center; height: 100%;"},
@@ -18048,7 +18057,14 @@ def server(input: Inputs, output: Outputs, session: Session):
                     {"class": "vitrine-header"},
                     ui.img(
                         src="https://huggingface.co/spaces/AMalta/INDICLIN/resolve/main/logoMP.jpeg",
-                        style="height: 120px; width: auto; margin-bottom: 1.5rem;"
+                        style="""
+                            height: 140px; 
+                            width: auto; 
+                            margin-bottom: 2rem;
+                            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+                            transition: transform 0.3s ease;
+                        """,
+                        class_="logo-medpix"
                     ),
                     ui.h1(
                         clinica.get('vitrine_titulo') or clinica.get('nome_fantasia') or "Bem-vindo!",

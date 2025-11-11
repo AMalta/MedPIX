@@ -2431,35 +2431,62 @@ def server(input: Inputs, output: Outputs, session: Session):
     # ==========================================================
     @reactive.calc
     def get_url_params():
-        """Lê os parâmetros da URL via JavaScript"""
+        """Lê os parâmetros da URL de forma confiável"""
+        resultado = {"view": None, "clinic_id": None}
+        
         try:
-            # Prioridade 1: Pegar dos inputs JavaScript
-            view = input.url_view_param() if hasattr(input, 'url_view_param') else None
-            clinic_id = input.url_clinic_id_param() if hasattr(input, 'url_clinic_id_param') else None
+            # Método 1: Via input JavaScript (se disponível)
+            if hasattr(input, 'url_view_param'):
+                view_js = input.url_view_param()
+                if view_js:
+                    resultado["view"] = view_js
+                    
+            if hasattr(input, 'url_clinic_id_param'):
+                clinic_js = input.url_clinic_id_param()
+                if clinic_js:
+                    resultado["clinic_id"] = clinic_js
             
-            resultado = {
-                "view": view,
-                "clinic_id": clinic_id
-            }
+            # Se pegou via JS, retorna
+            if resultado["view"] or resultado["clinic_id"]:
+                print(f"✅ URL Params (JavaScript): {resultado}")
+                return resultado
             
-            print(f"✅ URL Params (JavaScript): {resultado}")
+            # Método 2: Via session (funciona no Render)
+            try:
+                # Tenta acessar via diferentes atributos do session
+                if hasattr(session, 'http_conn'):
+                    if hasattr(session.http_conn, 'scope'):
+                        scope = session.http_conn.scope
+                        query_string = scope.get('query_string', b'').decode('utf-8')
+                        if query_string:
+                            params = urllib.parse.parse_qs(query_string)
+                            resultado["view"] = params.get('view', [None])[0]
+                            resultado["clinic_id"] = params.get('clinic_id', [None])[0]
+                            print(f"✅ URL Params (Scope): {resultado}")
+                            return resultado
+            except Exception as e:
+                print(f"⚠️ Método scope falhou: {e}")
             
-            # Se não conseguiu via JS, tenta via request (fallback)
-            if not view and not clinic_id:
-                try:
-                    request = session.http_conn.request
-                    query_params = dict(request.query_params)
-                    resultado["view"] = query_params.get('view')
-                    resultado["clinic_id"] = query_params.get('clinic_id')
+            # Método 3: Via request.query_params
+            try:
+                request = session.http_conn.request
+                query_params = dict(request.query_params)
+                resultado["view"] = query_params.get('view')
+                resultado["clinic_id"] = query_params.get('clinic_id')
+                if resultado["view"] or resultado["clinic_id"]:
                     print(f"✅ URL Params (Request): {resultado}")
-                except:
-                    pass
+                    return resultado
+            except Exception as e:
+                print(f"⚠️ Método request falhou: {e}")
             
-            return resultado
+            print(f"⚠️ Nenhum método funcionou. Resultado: {resultado}")
             
         except Exception as e:
-            print(f"❌ Erro ao ler URL params: {e}")
-            return {"view": None, "clinic_id": None}
+            print(f"❌ Erro geral ao ler URL params: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        return resultado
     # ==========================================================
     
     
@@ -10853,7 +10880,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 print(f"⚠️ Não foi possível obter URL automaticamente. Erro: {e}")
                 # Fallback: usa URL hardcoded do Hugging Face
                 # SUBSTITUA PELA SUA URL REAL se não estiver no HF
-                base_url = "https://indiclin.onrender.com"  # Substitua pela SUA URL do Render
+                base_url = "https://medpix.onrender.com"  # Substitua pela SUA URL do Render
                 print(f"ℹ️ Usando URL fallback: {base_url}")
 
             # Link final

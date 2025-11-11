@@ -1991,6 +1991,27 @@ def gerar_codigo_venda_com_beneficiario(cliente_id, beneficiario_nome, beneficia
 # ==================== INTERFACE ====================
 
 app_ui = ui.page_fluid(
+    ui.tags.script("""
+        // Captura parâmetros da URL e envia para o Shiny
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const view = urlParams.get('view');
+            const clinic_id = urlParams.get('clinic_id');
+            
+            console.log('🔍 JavaScript - Parâmetros capturados:', {view, clinic_id});
+            
+            if (view || clinic_id) {
+                // Aguarda o Shiny estar pronto
+                setTimeout(function() {
+                    if (typeof Shiny !== 'undefined') {
+                        Shiny.setInputValue('url_view_param', view, {priority: 'event'});
+                        Shiny.setInputValue('url_clinic_id_param', clinic_id, {priority: 'event'});
+                        console.log('✅ Parâmetros enviados para o Shiny');
+                    }
+                }, 100);
+            }
+        });
+    """),
     ui.tags.head(
         ui.tags.style("""
             body { background: linear-gradient(135deg, #1DD1A1 0%, #0D9488 100%);
@@ -2410,40 +2431,35 @@ def server(input: Inputs, output: Outputs, session: Session):
     # ==========================================================
     @reactive.calc
     def get_url_params():
-        """Lê os parâmetros da URL usando método alternativo"""
+        """Lê os parâmetros da URL via JavaScript"""
         try:
-            # Método 1: Tentar via Starlette Request
-            from starlette.requests import Request
-            request: Request = session.http_conn.request
-            query_params = dict(request.query_params)
+            # Prioridade 1: Pegar dos inputs JavaScript
+            view = input.url_view_param() if hasattr(input, 'url_view_param') else None
+            clinic_id = input.url_clinic_id_param() if hasattr(input, 'url_clinic_id_param') else None
             
             resultado = {
-                "view": query_params.get('view'),
-                "clinic_id": query_params.get('clinic_id')
+                "view": view,
+                "clinic_id": clinic_id
             }
             
-            print(f"✅ URL Params (Starlette): {resultado}")
+            print(f"✅ URL Params (JavaScript): {resultado}")
+            
+            # Se não conseguiu via JS, tenta via request (fallback)
+            if not view and not clinic_id:
+                try:
+                    request = session.http_conn.request
+                    query_params = dict(request.query_params)
+                    resultado["view"] = query_params.get('view')
+                    resultado["clinic_id"] = query_params.get('clinic_id')
+                    print(f"✅ URL Params (Request): {resultado}")
+                except:
+                    pass
+            
             return resultado
             
-        except Exception as e1:
-            print(f"❌ Método 1 falhou: {e1}")
-            
-            try:
-                # Método 2: Tentar via client_data (fallback)
-                url_search = session.client_data.url_search
-                if url_search:
-                    params = urllib.parse.parse_qs(url_search.lstrip('?'))
-                    resultado = {
-                        "view": params.get('view', [None])[0],
-                        "clinic_id": params.get('clinic_id', [None])[0]
-                    }
-                    print(f"✅ URL Params (client_data): {resultado}")
-                    return resultado
-            except Exception as e2:
-                print(f"❌ Método 2 também falhou: {e2}")
-        
-        print("⚠️ Retornando params vazios")
-        return {"view": None, "clinic_id": None}
+        except Exception as e:
+            print(f"❌ Erro ao ler URL params: {e}")
+            return {"view": None, "clinic_id": None}
     # ==========================================================
     
     

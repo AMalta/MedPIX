@@ -18036,8 +18036,8 @@ def server(input: Inputs, output: Outputs, session: Session):
                         )
                     )
             
-            # --- URL de Compra ---
-            base_url = f"{session.client_data.url_protocol}//{session.client_data.url_host}{session.client_data.url_pathname}"
+            # --- Constrói URL de "Comprar Agora" ---
+            base_url = "https://medpix.onrender.com"        
             
             # --- Renderiza a Página Completa ---
             return ui.div(
